@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<link rel="stylesheet" href="./css/opp.css">
+	<style>
+	*{
+		margin: 0;
+		padding: 0;
+	}
+	html,body{
+		background-color: #f2f2f2;
+		height:2000px;
+		overflow: auto;
+	}
+	canvas{
+		background-color: #fff;
+		position: fixed;
+		top: 0;
+		left: 0;
+	}
+</style>
+<script src="http://code.jquery.com/jquery-2.1.1.min.js"></script>
+</head>
+<body>
+
+<script>
+//获取屏幕宽高
+var width = window.innerWidth,height=window.innerHeight;
+// 添加canvas元素
+document.write('<canvas id="canvas" width="'+window.innerWidth+'" height="'+window.innerHeight+'"></canvas>');
+$(function(){
+	// boll构造函数，(位置、每次刷新的位移、半径)
+	function Boll(x,y,dx,dy,r){
+		this.x=x;
+		this.y=y;
+		this.dx=dx;
+		this.odx=dx;
+		this.dy=dy;
+		this.ody=dy;
+		this.r= r;
+		this.or= r;
+		this.bg = getColor();//随机颜色
+	}
+	// boll画入
+	Boll.prototype.draw=function(r){
+		ctx.beginPath();
+		ctx.fillStyle = this.bg;
+		ctx.arc(this.x,this.y,this.r,Math.PI/180*0,Math.PI/180*360,false);
+		ctx.fill();
+	};
+	// 位移
+	Boll.prototype.update=function(){
+		if(this.x<0||this.x>width){
+			this.dx=-this.dx;
+		}
+		if(this.y<0||this.y>height){
+			this.dy = -this.dy;
+		}
+		this.x+=this.dx;
+		this.y+=this.dy;
+		this.draw();
+	};
+	// 划线
+	Boll.prototype.line=function(bolls){
+		for(var j=0;j<bolls.length;j++){
+			if(getS(bolls[j].x-this.x,bolls[j].y-this.y)<s){
+				ctx.beginPath();
+				var linear = ctx.createLinearGradient(this.x,this.y,bolls[j].x,bolls[j].y);
+				linear.addColorStop(0,this.bg);
+				linear.addColorStop(1,bolls[j].bg);
+				ctx.strokeStyle = linear;
+				ctx.moveTo(this.x,this.y);
+				ctx.lineTo(bolls[j].x,bolls[j].y);
+				ctx.stroke();
+			}
+		}
+	}
+	var canvas = $('#canvas')[0],
+		ctx = canvas.getContext('2d'),
+
+		arr=[],//boll数组
+		num = 100,//boll数量
+		mouse={x:0,y:0},//鼠标位置
+		s=100;//可连线区域范围
+	// 监听鼠标位置
+	window.addEventListener('mousemove',function(e){
+		mouse.x=e.clientX;
+		mouse.y=e.clientY;
+		arr[0].x=mouse.x;
+		arr[0].y=mouse.y;
+	})
+	// 实例化num个boll
+	arr.push(new Boll(mouse.x,mouse.y,0,0,returnNum(2,4)));
+	for(var i=0;i<num-1;i++){
+		arr.push(new Boll(Math.random()*width,Math.random()*height,(Math.random()-0.5)*2,(Math.random()-0.5)*2,returnNum(2,4)));
+	}
+	// 实现动画，先清空画布，再把位移的num个boll画上去
+	function ani(){
+		ctx.beginPath();
+		ctx.fillStyle='#fff';
+		ctx.fillRect(0,0,width,height);
+		for(var i=0;i<num;i++){
+			arr[i].update();
+			arr[i].line(arr);
+		}
+		requestAnimationFrame(ani);
+	}
+	ani();
+	// 得到a，b范围内的数
+	function returnNum(a,b){
+		return Math.random()*(b-a)+a;
+	}
+	// 得到两点距离
+	function getS(x,y){
+		return Math.sqrt(x*x+y*y);
+	}
+	// 产生随机颜色
+	function getColor(){
+		var r = ((Math.random()*255).toFixed(0)*1).toString(16),
+		g = ((Math.random()*255).toFixed(0)*1).toString(16),
+		b = ((Math.random()*255).toFixed(0)*1).toString(16);
+		return '#'+(parseInt(r,16)<16?('0'+r):r)+(parseInt(g,16)<16?('0'+g):g)+(parseInt(b,16)<16?('0'+b):b);
+	}
+})
+</script>
+</body>
+</html>
